@@ -1,56 +1,57 @@
 import express from "express";
-import bodyParser from "body-parser";
+import cors from "cors";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 
-// ES module-safe __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const app = express();
 
-// Load trivia safely
-const triviaPath = path.join(__dirname, "trivia.json");
-let triviaQuestions = [];
+// Use environment port or fallback to 3000
+const PORT = process.env.PORT || 3000;
+
+// Enable JSON parsing
+app.use(express.json());
+app.use(cors());
+
+// Safe path for trivia file
+const triviaPath = path.resolve("trivia.json");
+let trivia = [];
+
 try {
-  triviaQuestions = JSON.parse(fs.readFileSync(triviaPath, "utf-8"));
-  console.log(`Loaded ${triviaQuestions.length} trivia questions`);
+  const data = fs.readFileSync(triviaPath, "utf-8");
+  trivia = JSON.parse(data);
+  console.log(`Loaded ${trivia.length} trivia questions`);
 } catch (err) {
-  console.warn(
-    "Warning: trivia.json not found or failed to load. Trivia will be disabled."
-  );
+  console.warn(`Could not load trivia.json: ${err.message}`);
+  trivia = [];
 }
 
-// Initialize Express
-const app = express();
-app.use(bodyParser.json());
+// Browser-friendly route for sanity check
+app.get("/", (req, res) => {
+  res.send("MCP server is running. POST to /mcp with JSON to interact.");
+});
 
-// MCP endpoint
+// MCP endpoint for PMG bot
 app.post("/mcp", (req, res) => {
-  console.log("Incoming message:", req.body);
+  const userMessage = req.body?.message || "";
+  console.log("Incoming message:", userMessage);
 
-  const userMessage = req.body.message || "";
-
-  if (/trivia/i.test(userMessage) && triviaQuestions.length > 0) {
-    // Pick a random trivia question
-    const question =
-      triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
-    res.json({
-      reply: `Trivia: ${question.question}\nOptions: ${question.options.join(
-        ", "
-      )}`
-    });
-    console.log("Responded with trivia question");
-    return;
+  if (!userMessage) {
+    return res.json({ reply: "No message received." });
   }
 
-  // Default reply
-  res.json({ reply: `MCP server received your message: "${userMessage}"` });
-  console.log("Responded with default message");
+  // Simple trivia response
+  let reply;
+  if (/trivia/i.test(userMessage) && trivia.length > 0) {
+    const question = trivia[Math.floor(Math.random() * trivia.length)];
+    reply = `Trivia: ${question.question} Options: ${question.options.join(", ")}`;
+  } else {
+    reply = `You said: "${userMessage}"`;
+  }
+
+  res.json({ reply });
 });
 
-// Listen on Railway-assigned port
-const PORT = process.env.PORT || 3000;
+// Start server
 app.listen(PORT, () => {
-  console.log(`Test MCP server running on port ${PORT}`);
+  console.log(`MCP server running on port ${PORT}`);
 });
-
