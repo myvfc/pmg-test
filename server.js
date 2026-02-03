@@ -55,3 +55,7 @@ app.post("/mcp", (req, res) => {
 app.listen(PORT, () => {
   console.log(`MCP server running on port ${PORT}`);
 });
+app.get("/", (req, res) => {
+  res.send("MCP server is running. POST to /mcp with JSON to interact.");
+});
+
