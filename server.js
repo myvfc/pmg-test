@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 // ---------------------
 // Test MCP endpoint
 // ---------------------
-app.post("/mcp/chat", async (req, res) => {
+app.post("/mcp", async (req, res) => {
   try {
     const { message, subscriber_id, intent } = req.body;
 
