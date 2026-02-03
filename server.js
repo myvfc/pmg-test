@@ -8,9 +8,10 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load trivia
+// Load trivia file safely
 const triviaPath = path.join(__dirname, "trivia.json");
 let triviaQuestions = [];
+
 try {
   triviaQuestions = JSON.parse(fs.readFileSync(triviaPath, "utf-8"));
   console.log(`Loaded ${triviaQuestions.length} trivia questions`);
@@ -18,6 +19,7 @@ try {
   console.error("Error loading trivia.json:", err);
 }
 
+// Initialize Express
 const app = express();
 app.use(bodyParser.json());
 
@@ -27,11 +29,15 @@ app.post("/mcp", (req, res) => {
 
   const userMessage = req.body.message || "";
 
-  // Simple trivia trigger
+  // Simple trigger for trivia
   if (/trivia/i.test(userMessage)) {
     const question =
       triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
-    res.json({ reply: `Trivia: ${question.question}\nOptions: ${question.options.join(", ")}` });
+    res.json({
+      reply: `Trivia: ${question.question}\nOptions: ${question.options.join(
+        ", "
+      )}`
+    });
     console.log("Responded with trivia question");
     return;
   }
@@ -41,8 +47,8 @@ app.post("/mcp", (req, res) => {
   console.log("Responded with default message");
 });
 
-// Use Railway PORT
+// Railway required port
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Test MCP server running at http://localhost:${PORT}`);
+  console.log(`Test MCP server running on port ${PORT}`);
 });
