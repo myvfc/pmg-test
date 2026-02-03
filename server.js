@@ -1,13 +1,8 @@
-import express from "express";
-import bodyParser from "body-parser";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import axios from "axios";
-
-// Fix __dirname in ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require("express");
+const bodyParser = require("body-parser");
+const fs = require("fs");
+const path = require("path");
+const axios = require("axios");
 
 const app = express();
 const PORT = 3000;
@@ -23,28 +18,25 @@ app.use(bodyParser.json());
 // ---------------------
 app.post("/mcp/chat", async (req, res) => {
   try {
-    const { message, subscriber_id, intent } = req.body; // message from chatbot front-end
+    const { message, subscriber_id, intent } = req.body;
+
+    let responseText = "";
 
     // --- Detect trivia request ---
-    let responseText = "";
-    if (message.toLowerCase().includes("trivia")) {
-      // pick a random question
+    if (message && message.toLowerCase().includes("trivia")) {
       const randomIndex = Math.floor(Math.random() * triviaQuestions.length);
       const question = triviaQuestions[randomIndex];
       responseText = `Trivia: ${question.question}\nOptions: ${question.options.join(", ")}`;
     }
     // --- Detect video request ---
-    else if (message.toLowerCase().includes("video") || message.toLowerCase().includes("highlight")) {
-      // Return up to 3 mock video links
-      responseText = `🎬 Highlights:\n1. https://youtu.be/video1\n2. https://youtu.be/video2\n3. https://youtu.be/video3`;
+    else if (message && (message.toLowerCase().includes("video") || message.toLowerCase().includes("highlight"))) {
+      responseText = `🎬 Highlights (up to 3):\n1. https://youtu.be/video1\n2. https://youtu.be/video2\n3. https://youtu.be/video3`;
     }
-    // --- Otherwise, call hub/orchestrator MCP ---
+    // --- Forward everything else to orchestrator MCP ---
     else {
-      // Replace with your actual orchestrator MCP URL and token
-      const HUB_MCP_URL = "https://your-orchestrator.com/mcp";
-      const HUB_MCP_TOKEN = "YOUR_HUB_TOKEN_HERE";
+      const HUB_MCP_URL = "https://your-orchestrator.com/mcp"; // replace with your hub MCP
+      const HUB_MCP_TOKEN = "YOUR_HUB_TOKEN_HERE";             // replace with your token
 
-      // Call orchestrator MCP
       const hubResponse = await axios.post(
         HUB_MCP_URL,
         {
@@ -68,9 +60,7 @@ app.post("/mcp/chat", async (req, res) => {
       responseText = hubResponse.data?.result || "Orchestrator did not return a response.";
     }
 
-    res.json({
-      reply: responseText
-    });
+    res.json({ reply: responseText });
   } catch (error) {
     console.error("Error in /mcp/chat:", error.message);
     res.status(500).json({ error: error.message });
