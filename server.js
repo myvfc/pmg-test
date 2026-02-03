@@ -8,7 +8,7 @@ const app = express();
 const PORT = 3000;
 
 // Load trivia JSON
-const triviaPath = path.join(__dirname, "ou_sooner_trivia_500.json");
+const triviaPath = path.join(__dirname, "trivia.json");
 const triviaQuestions = JSON.parse(fs.readFileSync(triviaPath, "utf-8"));
 
 app.use(bodyParser.json());
